@@ -1,0 +1,23 @@
+#myMap {
+    width:800px;
+    height:500px;
+    position: relative;
+    margin: auto;
+    width: 60%;
+    padding: 10px;
+}
+
+#center {
+    margin: auto;
+    width: 60%;
+    padding: 10px;
+}
+
+#search{
+    margin-left: 20%;
+}
+
+.form-control {
+    margin: 0 20%;
+}
+
