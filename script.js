@@ -1,8 +1,9 @@
 var map, searchManager;
+var BingMapsKey = 'AuV6Kc6hF3yFNL_DXFTDGuSu9DCdIK8zYF208z0eNdqbXtt87UHslIKJ70900Wbj';
 
 function GetMap() {
     map = new Microsoft.Maps.Map('#myMap', {
-        credentials: 'AuV6Kc6hF3yFNL_DXFTDGuSu9DCdIK8zYF208z0eNdqbXtt87UHslIKJ70900Wbj'
+        credentials: BingMapsKey
     });
 
     //Load the spatial math module
@@ -26,7 +27,46 @@ function GetMap() {
     });
 }
 
-function Search() {
+function geocode() {
+    var query = document.getElementById('input').value;
+
+    var geocodeRequest = "http://dev.virtualearth.net/REST/v1/LocalSearch?query=" + encodeURIComponent(query) + "&jsonp=GeocodeCallback&key=" + BingMapsKey;
+
+    CallRestService(geocodeRequest, GeocodeCallback);
+}
+
+function GeocodeCallback(response) {
+    var output = document.getElementById('output');
+
+    if (response &&
+        response.resourceSets &&
+        response.resourceSets.length > 0 &&
+        response.resourceSets[0].resources) {
+
+        var results = response.resourceSets[0].resources;
+
+        var html = ['<table><tr><td>Name</td><td>Latitude</td><td>Longitude</td></tr>'];
+
+        for (var i = 0; i < results.length; i++) {
+            html.push('<tr><td>', results[i].name, '</td><td>', results[i].point.coordinates[0], '</td><td>', results[i].point.coordinates[1], '</td></tr>');
+        }
+
+        html.push('</table>');
+
+        output.innerHTML = html.join('');
+    } else {
+        output.innerHTML = "No results found.";
+    }
+}
+
+function CallRestService(request) {
+    var script = document.createElement("script");
+    script.setAttribute("type", "text/javascript");
+    script.setAttribute("src", request);
+    document.body.appendChild(script);
+}
+
+/*function Search() {
     if (!searchManager) {
         //Create an instance of the search manager and perform the search.
         Microsoft.Maps.loadModule('Microsoft.Maps.Search', function () {
@@ -65,7 +105,7 @@ function geocodeQuery(query) {
                 map.entities.push(pins);
 
                 //Display list of results
-                document.getElementById('output').innerHTML = output;
+                document.getElementById('result').innerHTML = output;
 
                 //Determine a bounding box to best view the results.
                 var bounds;
@@ -88,4 +128,4 @@ function geocodeQuery(query) {
 
     //Make the geocode request.
     searchManager.geocode(searchRequest);
-}
+}*/
