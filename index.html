@@ -20,13 +20,14 @@
     <h1 class="display-4" id="center">Search for business: </h1>
 
     <div class="input-group mb-3">
-        <input type="text" id="input" class="form-control" id="searchTbx">
+        <input type="text" id="input" class="form-control" value="eat">
     </div>
 
     <button type="button" class="btn btn-outline-dark btn-large" id="search" value="Search"
-        onclick="geocode()">Search</button>
+        onClick="geocode()">Search</button>
+    <button type="button" class="btn btn-outline-dark btn-large" value="Save"
+        onClick="WriteToFile()">Save</button>
     <div id="output">Output</div>
-    <div id="result">Result</div>
 </body>
 
 </html>
