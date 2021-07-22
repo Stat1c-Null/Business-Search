@@ -1,7 +1,7 @@
 var map, searchManager;
 var BingMapsKey = 'AuV6Kc6hF3yFNL_DXFTDGuSu9DCdIK8zYF208z0eNdqbXtt87UHslIKJ70900Wbj';
 let data = ""
-const longlat = [34.888634, -81.304888, 35.579597, -80.360028]
+let userLat , userLong, updatedLat, updatedLong
 
 function GetMap() {
     map = new Microsoft.Maps.Map('#myMap', {
@@ -13,7 +13,11 @@ function GetMap() {
         //Request the user's location
         navigator.geolocation.getCurrentPosition(function (position) {
             var loc = new Microsoft.Maps.Location(position.coords.latitude, position.coords.longitude);
-
+            userLat = position.coords.latitude
+            userLong = position.coords.longitude
+            updatedLat = userLat + 0.05
+            updatedLong = userLong + 0.05
+            geocode()
             //Create an accuracy circle
             var path = Microsoft.Maps.SpatialMath.getRegularPolygon(loc, position.coords.accuracy, 36, Microsoft.Maps.SpatialMath.Meters);
             var poly = new Microsoft.Maps.Polygon(path);
@@ -29,12 +33,17 @@ function GetMap() {
     });
 }
 
+
+
 function geocode() {
     var query = document.getElementById('input').value;
-
-    var geocodeRequest = "http://dev.virtualearth.net/REST/v1/LocalSearch/?query=" + encodeURIComponent(query) + "&userMapView=" + encodeURIComponent(longlat) + "&maxResults=25&jsonp=GeocodeCallback&key=" + BingMapsKey;
-
-    CallRestService(geocodeRequest, GeocodeCallback);
+    for (let x = 0; x < 10; x++){
+        const longlat = [userLat, userLong, updatedLat, updatedLong]
+        var geocodeRequest = "http://dev.virtualearth.net/REST/v1/LocalSearch/?query=" + encodeURIComponent(query) + "&userMapView=" + encodeURIComponent(longlat) + "&maxResults=25&jsonp=GeocodeCallback&key=" + BingMapsKey;
+        CallRestService(geocodeRequest, GeocodeCallback);
+        updatedLat += 0.05
+        updatedLong += 0.05
+    }
 }
 
 function GeocodeCallback(response) {
@@ -58,7 +67,9 @@ function GeocodeCallback(response) {
 
         html.push('</table>');
 
-        output.innerHTML = html.join('');
+
+        output.innerHTML += html.join('');
+
 
     } else {
         output.innerHTML = "No results found.";
