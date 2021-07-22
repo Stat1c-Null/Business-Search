@@ -1,6 +1,6 @@
 #myMap {
-    width:800px;
-    height:800px;
+    width:600px;
+    height:600px;
     position: relative;
     margin: auto;
     width: 60%;
@@ -13,7 +13,7 @@
     padding: 10px;
 }
 
-#search{
+#search, #output{
     margin-left: 20%;
 }
 
