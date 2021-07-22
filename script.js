@@ -2,6 +2,7 @@ var map, searchManager;
 var BingMapsKey = 'AuV6Kc6hF3yFNL_DXFTDGuSu9DCdIK8zYF208z0eNdqbXtt87UHslIKJ70900Wbj';
 let data = ""
 let userLat , userLong, updatedLat, updatedLong
+
 function GetMap() {
     map = new Microsoft.Maps.Map('#myMap', {
         credentials: BingMapsKey
@@ -39,7 +40,6 @@ function geocode() {
     for (let x = 0; x < 10; x++){
         const longlat = [userLat, userLong, updatedLat, updatedLong]
         var geocodeRequest = "http://dev.virtualearth.net/REST/v1/LocalSearch/?query=" + encodeURIComponent(query) + "&userMapView=" + encodeURIComponent(longlat) + "&maxResults=25&jsonp=GeocodeCallback&key=" + BingMapsKey;
-
         CallRestService(geocodeRequest, GeocodeCallback);
         updatedLat += 0.05
         updatedLong += 0.05
@@ -67,7 +67,9 @@ function GeocodeCallback(response) {
 
         html.push('</table>');
 
+
         output.innerHTML += html.join('');
+
 
     } else {
         output.innerHTML = "No results found.";
