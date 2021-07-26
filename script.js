@@ -1,7 +1,7 @@
 var map, searchManager;
 var BingMapsKey = 'AuV6Kc6hF3yFNL_DXFTDGuSu9DCdIK8zYF208z0eNdqbXtt87UHslIKJ70900Wbj';
 let data = ""
-const longlat = [34.888634, -81.304888, 35.579597, -80.360028]
+let userLat , userLong, updatedLat, updatedLong
 
 function GetMap() {
     map = new Microsoft.Maps.Map('#myMap', {
@@ -13,7 +13,11 @@ function GetMap() {
         //Request the user's location
         navigator.geolocation.getCurrentPosition(function (position) {
             var loc = new Microsoft.Maps.Location(position.coords.latitude, position.coords.longitude);
-
+            userLat = position.coords.latitude
+            userLong = position.coords.longitude
+            updatedLat = userLat + 0.05
+            updatedLong = userLong + 0.05
+            geocode()
             //Create an accuracy circle
             var path = Microsoft.Maps.SpatialMath.getRegularPolygon(loc, position.coords.accuracy, 36, Microsoft.Maps.SpatialMath.Meters);
             var poly = new Microsoft.Maps.Polygon(path);
@@ -29,16 +33,36 @@ function GetMap() {
     });
 }
 
+
+
 function geocode() {
     var query = document.getElementById('input').value;
 
-    var geocodeRequest = "http://dev.virtualearth.net/REST/v1/LocalSearch/?query=" + encodeURIComponent(query) + "&userMapView=" + encodeURIComponent(longlat) + "&maxResults=25&jsonp=GeocodeCallback&key=" + BingMapsKey;
-
-    CallRestService(geocodeRequest, GeocodeCallback);
+    //Move to square nearby
+    for (let x = 0; x < 10; x++){
+        const longlat = [userLat, userLong, updatedLat, updatedLong]
+        var geocodeRequest = "http://dev.virtualearth.net/REST/v1/LocalSearch/?query=" + encodeURIComponent(query) + "&userMapView=" + encodeURIComponent(longlat) + "&maxResults=25&jsonp=GeocodeCallback&key=" + BingMapsKey;
+        CallRestService(geocodeRequest, GeocodeCallback);
+        userLat += 0.05
+        userLong += 0.05
+        updatedLat += 0.05
+        updatedLong += 0.05
+    }
 }
 
 function GeocodeCallback(response) {
     var output = document.getElementById('output');
+    let used = []
+    
+    function HasDuplicate(object){
+        for (let i = 0; i < used.length; i++){
+            if(used[i] == object)
+            {
+                return true
+            }
+        }
+        return false
+    }
 
     if (response &&
         response.resourceSets &&
@@ -47,18 +71,34 @@ function GeocodeCallback(response) {
 
         var results = response.resourceSets[0].resources;
 
-        var html = ['<table><tr><td>Name</td><td>Phone</td><td>Website</td></tr>'];
-
+        let html = ['<table>'];
+        
         for (var i = 0; i < results.length; i++) {
-            html.push('<tr><td>', results[i].name, '</td><td>', results[i].PhoneNumber, '</td><td>', results[i].Website, '</td></tr>');
-            data += results[i].PhoneNumber + "\n"
-            data += results[i].name + "\n"//Save Data into file
-            data += "\n"
+            if(results[i].PhoneNumber ==  "(770) 263-8808"){
+                alert("Phone " + results[i].PhoneNumber + "Name " + results[i].name)
+            }
+            console.log("Phone " + results[i].PhoneNumber + "Name " + results[i].name)
+            if (!HasDuplicate(results[i].PhoneNumber)){
+                if(results[i].PhoneNumber ==  "(770) 263-8808"){
+                    alert("Not Duplicated ; Adding ")
+                }
+                console.log("Not Duplicate")
+                html.push('<tr><td>' + results[i].name + '</td><td>' + results[i].PhoneNumber + '</td></tr>');//<td>', results[i].Website, '</td>
+                data += results[i].PhoneNumber + " , " + results[i].name + "\n"//Save Data into file
+                used.push(results[i].PhoneNumber)
+            } else {
+                if(results[i].PhoneNumber ==  "(770) 263-8808"){
+                    alert("Duplicate " + results[i].name)
+                }
+                console.log("Duplicate " + results[i].name)
+            }
         }
 
         html.push('</table>');
 
-        output.innerHTML = html.join('');
+
+        output.innerHTML += html.join('');
+
 
     } else {
         output.innerHTML = "No results found.";
