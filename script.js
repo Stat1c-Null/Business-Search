@@ -1,7 +1,9 @@
 var map, searchManager;
 var BingMapsKey = 'AuV6Kc6hF3yFNL_DXFTDGuSu9DCdIK8zYF208z0eNdqbXtt87UHslIKJ70900Wbj';
-let data = ""
+let data = ""//String to store data that will be saved 
 let userLat , userLong, updatedLat, updatedLong
+let used = []//Array for posted numbers
+
 
 function GetMap() {
     map = new Microsoft.Maps.Map('#myMap', {
@@ -37,8 +39,8 @@ function GetMap() {
 
 function geocode() {
     var query = document.getElementById('input').value;
-
-    //Move to square nearby
+    document.getElementById('output').innerHTML = "" // Clear out old input before posting new search result
+    //Move around the map and get locations from specific square
     for (let x = 0; x < 10; x++){
         const longlat = [userLat, userLong, updatedLat, updatedLong]
         var geocodeRequest = "http://dev.virtualearth.net/REST/v1/LocalSearch/?query=" + encodeURIComponent(query) + "&userMapView=" + encodeURIComponent(longlat) + "&maxResults=25&jsonp=GeocodeCallback&key=" + BingMapsKey;
@@ -48,12 +50,12 @@ function geocode() {
         updatedLat += 0.05
         updatedLong += 0.05
     }
+    console.log(used)
 }
 
 function GeocodeCallback(response) {
-    var output = document.getElementById('output');
-    let used = []
-    
+    let output = document.getElementById('output');
+    //Chech if phone number has been already posted
     function HasDuplicate(object){
         for (let i = 0; i < used.length; i++){
             if(used[i] == object)
@@ -72,29 +74,22 @@ function GeocodeCallback(response) {
         var results = response.resourceSets[0].resources;
 
         let html = ['<table>'];
-        
+       
         for (var i = 0; i < results.length; i++) {
-            if(results[i].PhoneNumber ==  "(770) 263-8808"){
-                alert("Phone " + results[i].PhoneNumber + "Name " + results[i].name)
-            }
-            console.log("Phone " + results[i].PhoneNumber + "Name " + results[i].name)
+            console.log("Phone " + results[i].PhoneNumber + " Name " + results[i].name)
             if (!HasDuplicate(results[i].PhoneNumber)){
-                if(results[i].PhoneNumber ==  "(770) 263-8808"){
-                    alert("Not Duplicated ; Adding ")
-                }
                 console.log("Not Duplicate")
                 html.push('<tr><td>' + results[i].name + '</td><td>' + results[i].PhoneNumber + '</td></tr>');//<td>', results[i].Website, '</td>
                 data += results[i].PhoneNumber + " , " + results[i].name + "\n"//Save Data into file
                 used.push(results[i].PhoneNumber)
             } else {
-                if(results[i].PhoneNumber ==  "(770) 263-8808"){
-                    alert("Duplicate " + results[i].name)
-                }
-                console.log("Duplicate " + results[i].name)
+                console.log("IsDuplicate " + results[i].name)
             }
         }
+       
 
         html.push('</table>');
+        
 
 
         output.innerHTML += html.join('');
