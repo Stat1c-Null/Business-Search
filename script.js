@@ -1,9 +1,13 @@
-var map, searchManager;
-var BingMapsKey = 'AuV6Kc6hF3yFNL_DXFTDGuSu9DCdIK8zYF208z0eNdqbXtt87UHslIKJ70900Wbj';
+let map, searchManager;
+let BingMapsKey = 'AuV6Kc6hF3yFNL_DXFTDGuSu9DCdIK8zYF208z0eNdqbXtt87UHslIKJ70900Wbj';
 let data = ""//String to store data that will be saved 
-let userLat , userLong, updatedLat, updatedLong
+let userLat , userLong, updatedLat, updatedLong//Coords variables
 let used = []//Array for posted numbers
-
+let lats = []
+let longs = []
+let words = ["barber", "massage", "nails", "repair", "computer", "car"]
+let counter = 1
+let range = 30//Range of loops
 
 function GetMap() {
     map = new Microsoft.Maps.Map('#myMap', {
@@ -14,19 +18,23 @@ function GetMap() {
     Microsoft.Maps.loadModule("Microsoft.Maps.SpatialMath", function () {
         //Request the user's location
         navigator.geolocation.getCurrentPosition(function (position) {
-            var loc = new Microsoft.Maps.Location(position.coords.latitude, position.coords.longitude);
+            let loc = new Microsoft.Maps.Location(position.coords.latitude, position.coords.longitude);
             userLat = position.coords.latitude
             userLong = position.coords.longitude
-            updatedLat = userLat + 0.05
-            updatedLong = userLong + 0.05
-            geocode()
+            updatedLat = userLat + 0.005
+            updatedLong = userLong + 0.005
+            //Save first coordinates of the user
+            OGLat = userLat
+            OGLong = userLong
+            OGUPLat = updatedLat
+            OGUPLong = updatedLong
             //Create an accuracy circle
-            var path = Microsoft.Maps.SpatialMath.getRegularPolygon(loc, position.coords.accuracy, 36, Microsoft.Maps.SpatialMath.Meters);
-            var poly = new Microsoft.Maps.Polygon(path);
+            let path = Microsoft.Maps.SpatialMath.getRegularPolygon(loc, position.coords.accuracy, 36, Microsoft.Maps.SpatialMath.Meters);
+            let poly = new Microsoft.Maps.Polygon(path);
             map.entities.push(poly);
 
             //Add a pushpin at the user's location.
-            var pin = new Microsoft.Maps.Pushpin(loc);
+            let pin = new Microsoft.Maps.Pushpin(loc);
             map.entities.push(pin);
 
             //Center the map on the user's location.
@@ -38,19 +46,36 @@ function GetMap() {
 
 
 function geocode() {
-    var query = document.getElementById('input').value;
-    document.getElementById('output').innerHTML = "" // Clear out old input before posting new search result
-    //Move around the map and get locations from specific square
-    for (let x = 0; x < 10; x++){
-        const longlat = [userLat, userLong, updatedLat, updatedLong]
-        var geocodeRequest = "http://dev.virtualearth.net/REST/v1/LocalSearch/?query=" + encodeURIComponent(query) + "&userMapView=" + encodeURIComponent(longlat) + "&maxResults=25&jsonp=GeocodeCallback&key=" + BingMapsKey;
-        CallRestService(geocodeRequest, GeocodeCallback);
-        userLat += 0.05
-        userLong += 0.05
-        updatedLat += 0.05
-        updatedLong += 0.05
+    function Request(query){
+        //Move around the map and get locations from specific square
+        userLat = OGLat
+        userLong = OGLong
+        updatedLat = OGUPLat
+        updatedLong = OGUPLong
+        for (let x = 0; x < range; x++){
+            const longlat = [userLat, userLong, updatedLat, updatedLong]
+            var geocodeRequest = "http://dev.virtualearth.net/REST/v1/LocalSearch/?query=" + encodeURIComponent(query) + "&userMapView=" + encodeURIComponent(longlat) + "&maxResults=25&jsonp=GeocodeCallback&key=" + BingMapsKey;
+            CallRestService(geocodeRequest, GeocodeCallback);
+            userLat += 0.005
+            userLong += 0.005
+            updatedLat += 0.005
+            updatedLong += 0.005
+        }
+        console.log(used)
     }
-    console.log(used)
+    document.getElementById('output').innerHTML = "" // Clear out old input before posting new search result
+    let input = document.getElementById('input').value;
+    let query
+    //Check if input is empty, and if it is search all the themes, otherwise search for specific request
+    if (input.length == 0 ){
+        for (let z = 0; z < words.length; z++) {
+            query = words[z]
+            Request(query)
+        }
+    } else {
+        query = input
+        Request(query)
+    }
 }
 
 function GeocodeCallback(response) {
@@ -76,12 +101,16 @@ function GeocodeCallback(response) {
         let html = ['<table>'];
        
         for (var i = 0; i < results.length; i++) {
-            console.log("Phone " + results[i].PhoneNumber + " Name " + results[i].name)
             if (!HasDuplicate(results[i].PhoneNumber)){
-                console.log("Not Duplicate")
-                html.push('<tr><td>' + results[i].name + '</td><td>' + results[i].PhoneNumber + '</td></tr>');//<td>', results[i].Website, '</td>
+                html.push('<tr><td>' + counter + " " + '</td><td>' + results[i].name + '</td><td>' + results[i].PhoneNumber + '</td></tr>');//<td>', results[i].Website, '</td>
                 data += results[i].PhoneNumber + " , " + results[i].name + "\n"//Save Data into file
+                //PROBLEMS
+                lats.push(results[i].latitude)//Save latitude and longtitude so we can put a push pin on the map
+                longs.push(results[i].longitude)
+                console.log("Latitude: " + results[i].latitude + " Longtitude: " + results[i].longitude)
+                //PROBLEMS
                 used.push(results[i].PhoneNumber)
+                counter++
             } else {
                 console.log("IsDuplicate " + results[i].name)
             }
